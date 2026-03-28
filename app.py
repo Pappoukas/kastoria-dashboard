@@ -553,13 +553,13 @@ with tab_text:
         st.markdown("**Όλες οι κριτικές**")
         buf = make_wordcloud(dict(word_freq(rev_f["text"].tolist()).most_common(100)))
         if buf:
-            st.image(buf, use_container_width=True)
+            st.image(buf)
     with wc2:
         st.markdown("**Αρνητικές κριτικές (1-2★)**")
         neg_t = rev_f[rev_f["rating"]<=2]["text"].tolist()
         buf2 = make_wordcloud(dict(word_freq(neg_t).most_common(100)))
         if buf2:
-            st.image(buf2, use_container_width=True)
+            st.image(buf2)
         else:
             st.info("Δεν υπάρχουν αρκετές αρνητικές κριτικές.")
 
@@ -579,7 +579,7 @@ with tab_text:
     buf3 = make_wordcloud(dict(word_freq(
         rev_f[rev_f["placeInfo/name"]==att_wc]["text"].tolist()).most_common(100)))
     if buf3:
-        st.image(buf3, use_container_width=True)
+        st.image(buf3)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # ΓΛΩΣΣΑ & ΠΡΟΕΛΕΥΣΗ
@@ -763,7 +763,7 @@ with tab_inter:
 with tab_color_tab:
     sec("7. Χρωματική Ανάλυση Φωτογραφιών")
 
-    att_list = sorted(df_color["placeInfo/name"].unique())
+    att_list = sorted(df_color["placeInfo/name"].dropna().unique())
     sel_c = st.selectbox("Επέλεξε αξιοθέατο", att_list, key="catt")
     grp = df_color[df_color["placeInfo/name"] == sel_c].copy()
 
