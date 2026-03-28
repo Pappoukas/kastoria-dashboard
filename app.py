@@ -288,15 +288,15 @@ with st.sidebar:
     st.divider()
     st.markdown("### 🔍 Φίλτρα")
 
-    all_att  = sorted(df_rev["placeInfo/name"].unique())
+    all_att  = sorted(df_rev["placeInfo/name"].dropna().unique())
     sel_att  = st.multiselect("Αξιοθέατα", all_att, default=all_att)
 
     yrs = sorted(df_rev["year"].dropna().unique().astype(int))
     yr_range = st.slider("Έτος κριτικής", int(min(yrs)), int(max(yrs)),
                          (int(min(yrs)), int(max(yrs))))
 
-    sel_langs = st.multiselect("Γλώσσα", sorted(df_rev["lang_label"].unique()),
-                                default=sorted(df_rev["lang_label"].unique()))
+    sel_langs = st.multiselect("Γλώσσα", sorted(df_rev["lang_label"].dropna().unique()),
+                            default=sorted(df_rev["lang_label"].dropna().unique()))
 
     all_trips = [v for v in TRIPTYPE_GR.values() if v != "—"]
     sel_trips = st.multiselect("Τύπος ταξιδιού", all_trips, default=all_trips)
