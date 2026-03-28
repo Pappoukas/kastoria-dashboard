@@ -296,7 +296,7 @@ with st.sidebar:
                          (int(min(yrs)), int(max(yrs))))
 
     sel_langs = st.multiselect("Γλώσσα", sorted(df_rev["lang_label"].dropna().unique()),
-                            default=sorted(df_rev["lang_label"].dropna().unique()))
+                                default=sorted(df_rev["lang_label"].dropna().unique()))
 
     all_trips = [v for v in TRIPTYPE_GR.values() if v != "—"]
     sel_trips = st.multiselect("Τύπος ταξιδιού", all_trips, default=all_trips)
@@ -307,7 +307,7 @@ rev_f = df_rev[
     df_rev["lang_label"].isin(sel_langs) &
     (df_rev["tripType_gr"].isin(sel_trips) | (df_rev["tripType_gr"] == "—"))
 ]
-col_f = df_merged[df_merged["placeInfo/name_x"].isin(sel_att)]
+col_f = df_merged[df_merged["placeInfo/name"].isin(sel_att)]
 
 # ═══════════════════════════════════════════════════════════════════════════
 # TABS
