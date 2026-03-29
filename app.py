@@ -116,24 +116,18 @@ with st.sidebar:
     st.caption("Στατιστική ανάλυση κριτικών TripAdvisor")
     st.divider()
 
-    st.markdown("### 📁 Αρχεία δεδομένων")
-    up_rev = st.file_uploader("CSV κριτικών (.csv)",    type=["csv"], key="rev")
-    up_att = st.file_uploader("CSV αξιοθέατων (.csv)", type=["csv"], key="att")
+    # Αυτόματη φόρτωση από τον κατάλογο του repo
+    DEFAULT_REV = "TripAdvisor_Kastoria_Backup.csv"
+    DEFAULT_ATT = "Καστοριά_Αξιοθέατα.csv"
 
-    def resolve(up, default):
-        if up:
-            return save_upload(up)
-        if Path(default).exists():
-            return default
-        return None
+    for fname in [DEFAULT_REV, DEFAULT_ATT]:
+        if not Path(fname).exists():
+            st.error(f"Λείπει το αρχείο: **{fname}**")
+            st.info("Βεβαιώσου ότι τα CSV αρχεία βρίσκονται στον ίδιο φάκελο με το app.")
+            st.stop()
 
-    p_rev = resolve(up_rev, "TripAdvisor_Kastoria_Backup.csv")
-    p_att = resolve(up_att, "Καστοριά_Αξιοθέατα.csv")
-
-    missing = [n for n, p in [("CSV κριτικών", p_rev), ("CSV αξιοθέατων", p_att)] if not p]
-    if missing:
-        st.error("Λείπουν: " + ", ".join(missing))
-        st.stop()
+    p_rev = DEFAULT_REV
+    p_att = DEFAULT_ATT
 
 with st.spinner("Φόρτωση δεδομένων…"):
     df_rev = load_reviews(p_rev)
@@ -552,9 +546,15 @@ with tab_inter:
         sec("Μέγεθος κριτικής vs Βαθμολογία")
         rl = rev[rev["review_len"] < 3000].copy()
         rl["lbl"] = rl["rating"].astype(str) + "★"
+        rating_order = ["1★","2★","3★","4★","5★"]
         fig4 = px.box(rl, x="lbl", y="review_len",
                       color="lbl",
-                      color_discrete_sequence=COLORS_R[::-1],
+                      category_orders={"lbl": rating_order},
+                      color_discrete_map={
+                          "1★": COLORS_R[0], "2★": COLORS_R[1],
+                          "3★": COLORS_R[2], "4★": COLORS_R[3],
+                          "5★": COLORS_R[4],
+                      },
                       template="plotly_white",
                       labels={"review_len":"Χαρακτήρες","lbl":""})
         fig4.update_layout(showlegend=False, height=340)
