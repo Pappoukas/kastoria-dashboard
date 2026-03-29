@@ -45,7 +45,7 @@ COLORS_R = ["#c0392b","#e67e22","#f1c40f","#27ae60","#1a5276"]
 ATT_CATEGORY = {
     2513622:  "Φυσικό",       # Kastoria Lake
     3683565:  "Φυσικό",       # Cave of Dragon
-    10728247: "Φυσικό",  # Prophet Elias
+    10728247: "Φυσικό",       # Prophet Elias
     5602781:  "Πολιτιστικό",  # Fossilized Forest
     6533237:  "Πολιτιστικό",  # Panagia Mavriotissa Monastery
     11801225: "Πολιτιστικό",  # Byzantine Museum of Kastoria
@@ -133,8 +133,16 @@ with st.sidebar:
 with st.spinner("Φόρτωση δεδομένων…"):
     df_rev = load_reviews(p_rev)
     df_att = load_attractions(p_att)
-    # name→category lookup for charts that group by placeInfo/name
-    att_name_to_cat = dict(zip(df_att["placeInfo/name"], df_att["Category"]))
+
+# Category: map via placeInfo/id (outside cache to always reflect latest ATT_CATEGORY)
+_id_series = pd.to_numeric(df_rev["placeInfo/id"], errors="coerce")
+df_rev = df_rev.copy()
+df_rev["Category"] = _id_series.map(
+    {k: v for k, v in ATT_CATEGORY.items()}
+).fillna("Άλλο")
+
+# name→category for charts that group by attraction name
+att_name_to_cat = dict(zip(df_att["placeInfo/name"], df_att["Category"]))
 
 with st.sidebar:
     st.divider()
