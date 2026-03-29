@@ -164,12 +164,13 @@ rev = df_rev[
 ]
 
 # ── Tabs ──────────────────────────────────────────────────────────────────────
-tab_dash, tab_pop, tab_rat, tab_geo, tab_trip = st.tabs([
+tab_dash, tab_pop, tab_rat, tab_geo, tab_trip, tab_inter = st.tabs([
     "📊 Dashboard",
     "📈 Δημοφιλία",
     "⭐ Βαθμολογίες",
     "🌍 Γλώσσα & Προέλευση",
     "👥 Τύπος Ταξιδιού",
+    "📸 Αλληλεπίδραση",
 ])
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -503,6 +504,98 @@ with tab_trip:
             ft.update_traces(textposition="outside")
             ft.update_layout(height=300, yaxis_title="", coloraxis_showscale=False)
             st.plotly_chart(ft, use_container_width=True)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# ΑΛΛΗΛΕΠΙΔΡΑΣΗ
+# ══════════════════════════════════════════════════════════════════════════════
+with tab_inter:
+    sec("6. Αλληλεπίδραση & Δραστηριότητα Χρηστών")
+
+    cl, cr = st.columns(2)
+    with cl:
+        sec("Αριθμός φωτογραφιών ανά βαθμολογία")
+        ph = rev.groupby("rating")["Photocount"].mean().reset_index()
+        ph.columns = ["Βαθμολογία","Μέσος αρ."]
+        fig = px.bar(ph, x="Βαθμολογία", y="Μέσος αρ.",
+                     color="Μέσος αρ.", color_continuous_scale="Blues",
+                     template="plotly_white", text="Μέσος αρ.")
+        fig.update_traces(texttemplate="%{text:.2f}", textposition="outside")
+        fig.update_layout(coloraxis_showscale=False, height=280)
+        st.plotly_chart(fig, use_container_width=True)
+
+    with cr:
+        sec("Helpful votes ανά βαθμολογία")
+        hv = rev.groupby("rating")["helpfulVotes"].mean().reset_index()
+        hv.columns = ["Βαθμολογία","Μέσα votes"]
+        fig2 = px.bar(hv, x="Βαθμολογία", y="Μέσα votes",
+                      color="Μέσα votes", color_continuous_scale="Greens",
+                      template="plotly_white", text="Μέσα votes")
+        fig2.update_traces(texttemplate="%{text:.2f}", textposition="outside")
+        fig2.update_layout(coloraxis_showscale=False, height=280)
+        st.plotly_chart(fig2, use_container_width=True)
+
+    cl, cr = st.columns(2)
+    with cl:
+        sec("Απαντήσεις διαχειριστών ανά αξιοθέατο (%)")
+        rsp = rev.groupby("placeInfo/name")["has_response"].agg(["sum","count"]).reset_index()
+        rsp.columns = ["Αξιοθέατο","Απαντ.","Σύνολο"]
+        rsp["Ποσοστό %"] = (rsp["Απαντ."] / rsp["Σύνολο"] * 100).round(1)
+        rsp = rsp[rsp["Σύνολο"] >= 5].sort_values("Ποσοστό %", ascending=False)
+        fig3 = px.bar(rsp, x="Ποσοστό %", y="Αξιοθέατο", orientation="h",
+                      color="Ποσοστό %", color_continuous_scale="Teal",
+                      template="plotly_white", text="Ποσοστό %")
+        fig3.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
+        fig3.update_layout(height=380, yaxis_title="", coloraxis_showscale=False)
+        st.plotly_chart(fig3, use_container_width=True)
+
+    with cr:
+        sec("Μέγεθος κριτικής vs Βαθμολογία")
+        rl = rev[rev["review_len"] < 3000].copy()
+        rl["lbl"] = rl["rating"].astype(str) + "★"
+        fig4 = px.box(rl, x="lbl", y="review_len",
+                      color="lbl",
+                      color_discrete_sequence=COLORS_R[::-1],
+                      template="plotly_white",
+                      labels={"review_len":"Χαρακτήρες","lbl":""})
+        fig4.update_layout(showlegend=False, height=340)
+        st.plotly_chart(fig4, use_container_width=True)
+
+    sec("Κριτικές με/χωρίς φωτογραφία ανά βαθμολογία")
+    ph2 = rev.groupby(["rating","has_photo"]).size().reset_index(name="n")
+    ph2["Φωτ."] = ph2["has_photo"].map({True:"Με φωτ.", False:"Χωρίς φωτ."})
+    fig5 = px.bar(ph2, x="rating", y="n", color="Φωτ.", barmode="group",
+                  template="plotly_white",
+                  color_discrete_map={"Με φωτ.":"#2d4a6b","Χωρίς φωτ.":"#b8d4f5"},
+                  labels={"rating":"Βαθμολογία","n":"Κριτικές"})
+    fig5.update_layout(height=280)
+    st.plotly_chart(fig5, use_container_width=True)
+
+    sec("Αριθμός κριτικών ανά επίπεδο εμπλοκής χρήστη")
+    rev["contrib_group"] = pd.cut(
+        rev["user/contributions/totalContributions"].fillna(0),
+        bins=[0, 1, 5, 20, 100, 99999],
+        labels=["1 κριτική","2-5","6-20","21-100","100+"],
+    )
+    cg = rev.groupby("contrib_group", observed=True).agg(
+        Κριτικές=("rating","count"),
+        Μέση_βαθμ=("rating","mean"),
+    ).reset_index()
+    cg.columns = ["Εμπειρία χρήστη","Κριτικές","Μέση βαθμολογία"]
+    fig6 = make_subplots(specs=[[{"secondary_y": True}]])
+    fig6.add_trace(go.Bar(x=cg["Εμπειρία χρήστη"], y=cg["Κριτικές"],
+                           name="Κριτικές", marker_color="#b8d4f5"),
+                    secondary_y=False)
+    fig6.add_trace(go.Scatter(x=cg["Εμπειρία χρήστη"], y=cg["Μέση βαθμολογία"],
+                               name="Μέση βαθμολογία",
+                               line=dict(color="#e07b39", width=2),
+                               mode="lines+markers"),
+                    secondary_y=True)
+    fig6.update_layout(template="plotly_white", height=300,
+                        legend=dict(orientation="h", yanchor="bottom", y=1.02),
+                        xaxis_title="Εμπειρία χρήστη (αριθμός συνολικών κριτικών)")
+    fig6.update_yaxes(title_text="Κριτικές", secondary_y=False)
+    fig6.update_yaxes(title_text="Βαθμολογία", range=[4.0, 5.3], secondary_y=True)
+    st.plotly_chart(fig6, use_container_width=True)
 
 # ── Footer ─────────────────────────────────────────────────────────────────────
 st.divider()
