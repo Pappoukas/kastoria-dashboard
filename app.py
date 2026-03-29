@@ -94,7 +94,6 @@ def load_reviews(path):
     df["travelMonth"]   = df["travelDate"].dt.month
     df["lang_label"]    = df["lang"].map(LANG_MAP).fillna("Άλλη")
     df["tripType_gr"]   = df["tripType"].map(TRIPTYPE_GR).fillna("—")
-    # Category assigned after join with attractions (by placeInfo/id)
     df["is_foreign"]    = df["lang"] != "el"
     df["has_photo"]     = df["Photocount"].fillna(0) > 0
     df["has_response"]  = df["ownerResponse/text"].notna()
@@ -134,9 +133,8 @@ with st.sidebar:
 with st.spinner("Φόρτωση δεδομένων…"):
     df_rev = load_reviews(p_rev)
     df_att = load_attractions(p_att)
-    # Build name→category map from attractions (works even if names change)
-    name_to_cat = dict(zip(df_att["placeInfo/name"], df_att["Category"]))
-    df_rev["Category"] = df_rev["placeInfo/name"].map(name_to_cat).fillna("Άλλο")
+    # name→category lookup for charts that group by placeInfo/name
+    att_name_to_cat = dict(zip(df_att["placeInfo/name"], df_att["Category"]))
 
 with st.sidebar:
     st.divider()
@@ -193,7 +191,7 @@ with tab_dash:
         sec("Κριτικές ανά αξιοθέατο")
         d = rev["placeInfo/name"].value_counts().reset_index()
         d.columns = ["Αξιοθέατο","n"]
-        d["Κατηγορία"] = d["Αξιοθέατο"].map(ATT_CATEGORY).fillna("Άλλο")
+        d["Κατηγορία"] = d["Αξιοθέατο"].map(att_name_to_cat).fillna("Άλλο")
         fig = px.bar(d, x="n", y="Αξιοθέατο", orientation="h",
                      color="Κατηγορία", color_discrete_map=CAT_COLOR,
                      template="plotly_white", text="n")
@@ -206,7 +204,7 @@ with tab_dash:
         d2 = rev.groupby("placeInfo/name")["rating"].agg(["mean","count"]).reset_index()
         d2.columns = ["Αξιοθέατο","Μέση","n"]
         d2 = d2[d2["n"] >= 5].sort_values("Μέση")
-        d2["Κατηγορία"] = d2["Αξιοθέατο"].map(ATT_CATEGORY).fillna("Άλλο")
+        d2["Κατηγορία"] = d2["Αξιοθέατο"].map(att_name_to_cat).fillna("Άλλο")
         fig2 = px.bar(d2, x="Μέση", y="Αξιοθέατο", orientation="h",
                       color="Κατηγορία", color_discrete_map=CAT_COLOR,
                       template="plotly_white", text="Μέση", range_x=[3.5, 5.3])
