@@ -1,7 +1,7 @@
 """
 Kastoria Tourism Analytics — Streamlit Cloud Edition
 =====================================================
-Αρχεία: TripAdvisor_Kastoria_Backup.csv + Καστοριά_Αξιοθέατα.csv
+Αρχεία: TripAdvisor_Kastoria_Backup.csv + ThingsToDo.csv
 Εκκίνηση: streamlit run app_cloud.py
 """
 
@@ -41,25 +41,26 @@ TRIPTYPE_GR = {"COUPLES":"Ζευγάρια","FAMILY":"Οικογένεια","FRI
 LANG_MAP = {"el":"Ελληνικά","en":"Αγγλικά","ru":"Ρωσικά","it":"Ιταλικά",
             "nl":"Ολλανδικά","iw":"Εβραϊκά","fr":"Γαλλικά","de":"Γερμανικά"}
 COLORS_R = ["#c0392b","#e67e22","#f1c40f","#27ae60","#1a5276"]
+# Κατηγορίες ανά placeInfo/id — αλλάξτε ονόματα στο ThingsToDo.csv ελεύθερα
 ATT_CATEGORY = {
-    "Kastoria Lake":"Φυσικό",
-    "Cave of Dragon (Spilia tou drakou)":"Φυσικό",
-    "Fossilized Forest":"Φυσικό",
-    "Panagia Mavriotissa Monastery":"Πολιτιστικό",
-    "Byzantine Museum of Kastoria":"Πολιτιστικό",
-    "Folklore Museum of Kastoria":"Πολιτιστικό",
-    "Wax Museum  of Mavrochoriou Kastorias":"Πολιτιστικό",
-    "Kastorian Byzantine Churches.":"Πολιτιστικό",
-    "Church of the Panagia Koumbelidiki":"Πολιτιστικό",
-    "Church of St. Taksiarkhov u Mitropolii":"Πολιτιστικό",
-    "Endymatologiko Mouseio":"Πολιτιστικό",
-    "Prophet Elias":"Πολιτιστικό",
-    "Kastoria Aquarium":"Δραστηριότητα",
-    "Kastoria Outdoors":"Δραστηριότητα",
-    "Adventure Kastoria":"Δραστηριότητα",
-    "Mountain Lunatics":"Δραστηριότητα",
-    "Culture 8 Cultural City and Nature Guided Day Tours":"Δραστηριότητα",
-    "PANIK RENTALS":"Δραστηριότητα",
+    2513622:  "Φυσικό",       # Kastoria Lake
+    3683565:  "Φυσικό",       # Cave of Dragon
+    5602781:  "Φυσικό",       # Fossilized Forest
+    6533237:  "Πολιτιστικό",  # Panagia Mavriotissa Monastery
+    11801225: "Πολιτιστικό",  # Byzantine Museum of Kastoria
+    11658431: "Πολιτιστικό",  # Folklore Museum of Kastoria
+    6429009:  "Πολιτιστικό",  # Wax Museum of Mavrochoriou
+    10158726: "Πολιτιστικό",  # Kastorian Byzantine Churches
+    19798835: "Πολιτιστικό",  # Church of the Panagia Koumbelidiki
+    19760602: "Πολιτιστικό",  # Church of St. Taksiarkhov u Mitropolii
+    12216083: "Πολιτιστικό",  # Endymatologiko Mouseio
+    10728247: "Πολιτιστικό",  # Prophet Elias
+    4916758:  "Δραστηριότητα", # Kastoria Aquarium
+    8654617:  "Δραστηριότητα", # Kastoria Outdoors
+    23371045: "Δραστηριότητα", # Adventure Kastoria
+    26257913: "Δραστηριότητα", # Mountain Lunatics
+    3453869:  "Δραστηριότητα", # Culture 8 Guided Tours
+    25578267: "Δραστηριότητα", # PANIK RENTALS
 }
 CAT_COLOR = {"Φυσικό":"#2e86ab","Πολιτιστικό":"#a23b72",
              "Δραστηριότητα":"#f18f01","Άλλο":"#888"}
@@ -93,7 +94,7 @@ def load_reviews(path):
     df["travelMonth"]   = df["travelDate"].dt.month
     df["lang_label"]    = df["lang"].map(LANG_MAP).fillna("Άλλη")
     df["tripType_gr"]   = df["tripType"].map(TRIPTYPE_GR).fillna("—")
-    df["Category"]      = df["placeInfo/name"].map(ATT_CATEGORY).fillna("Άλλο")
+    # Category assigned after join with attractions (by placeInfo/id)
     df["is_foreign"]    = df["lang"] != "el"
     df["has_photo"]     = df["Photocount"].fillna(0) > 0
     df["has_response"]  = df["ownerResponse/text"].notna()
@@ -107,7 +108,8 @@ def load_attractions(path):
         df["placeInfo/latitude"].astype(str).str.replace(",","."), errors="coerce")
     df["placeInfo/longitude"] = pd.to_numeric(
         df["placeInfo/longitude"].astype(str).str.replace(",","."), errors="coerce")
-    df["Category"] = df["placeInfo/name"].map(ATT_CATEGORY).fillna("Άλλο")
+    df["placeInfo/id"] = pd.to_numeric(df["placeInfo/id"], errors="coerce")
+    df["Category"] = df["placeInfo/id"].map(ATT_CATEGORY).fillna("Άλλο")
     return df
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
@@ -118,7 +120,7 @@ with st.sidebar:
 
     # Αυτόματη φόρτωση από τον κατάλογο του repo
     DEFAULT_REV = "TripAdvisor_Kastoria_Backup.csv"
-    DEFAULT_ATT = "Καστοριά_Αξιοθέατα.csv"
+    DEFAULT_ATT = "ThingsToDo.csv"
 
     for fname in [DEFAULT_REV, DEFAULT_ATT]:
         if not Path(fname).exists():
@@ -132,6 +134,9 @@ with st.sidebar:
 with st.spinner("Φόρτωση δεδομένων…"):
     df_rev = load_reviews(p_rev)
     df_att = load_attractions(p_att)
+    # Build name→category map from attractions (works even if names change)
+    name_to_cat = dict(zip(df_att["placeInfo/name"], df_att["Category"]))
+    df_rev["Category"] = df_rev["placeInfo/name"].map(name_to_cat).fillna("Άλλο")
 
 with st.sidebar:
     st.divider()
