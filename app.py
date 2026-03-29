@@ -45,7 +45,8 @@ COLORS_R = ["#c0392b","#e67e22","#f1c40f","#27ae60","#1a5276"]
 ATT_CATEGORY = {
     2513622:  "Φυσικό",       # Kastoria Lake
     3683565:  "Φυσικό",       # Cave of Dragon
-    5602781:  "Φυσικό",       # Fossilized Forest
+    10728247: "Φυσικό",  # Prophet Elias
+    5602781:  "Πολιτιστικό",  # Fossilized Forest
     6533237:  "Πολιτιστικό",  # Panagia Mavriotissa Monastery
     11801225: "Πολιτιστικό",  # Byzantine Museum of Kastoria
     11658431: "Πολιτιστικό",  # Folklore Museum of Kastoria
@@ -54,7 +55,6 @@ ATT_CATEGORY = {
     19798835: "Πολιτιστικό",  # Church of the Panagia Koumbelidiki
     19760602: "Πολιτιστικό",  # Church of St. Taksiarkhov u Mitropolii
     12216083: "Πολιτιστικό",  # Endymatologiko Mouseio
-    10728247: "Πολιτιστικό",  # Prophet Elias
     4916758:  "Δραστηριότητα", # Kastoria Aquarium
     8654617:  "Δραστηριότητα", # Kastoria Outdoors
     23371045: "Δραστηριότητα", # Adventure Kastoria
