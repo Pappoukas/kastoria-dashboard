@@ -228,12 +228,12 @@ with tab_dash:
         rc.columns = ["placeInfo/name","Κριτικές"]
         map_df = att_map.merge(rc, on="placeInfo/name", how="left")
         map_df["Κριτικές"] = map_df["Κριτικές"].fillna(5)
-        fig_map = px.scatter_mapbox(
+        fig_map = px.scatter_map(
             map_df,
             lat="placeInfo/latitude", lon="placeInfo/longitude",
             hover_name="placeInfo/name", size="Κριτικές",
             color="Category", color_discrete_map=CAT_COLOR,
-            size_max=30, zoom=13, mapbox_style="open-street-map",
+            size_max=30, zoom=13, map_style="open-street-map",
         )
         fig_map.update_layout(height=400, margin=dict(l=0,r=0,t=0,b=0),
                                legend_title="Κατηγορία")
